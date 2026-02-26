@@ -3,6 +3,9 @@ const addBtn = document.getElementById('addBtn');
 const todoList = document.getElementById('todoList');
 const emptyMessage = document.getElementById('emptyMessage');
 const themeToggle = document.getElementById('themeToggle');
+const totalCount = document.getElementById('totalCount');
+const activeCount = document.getElementById('activeCount');
+const completedCount = document.getElementById('completedCount');
 
 // Load todos from localStorage
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
@@ -64,10 +67,11 @@ function renderTodos() {
 
     if (todos.length === 0) {
         emptyMessage.classList.remove('hidden');
-        return;
+    } else {
+        emptyMessage.classList.add('hidden');
     }
 
-    emptyMessage.classList.add('hidden');
+    updateTaskTracker();
 
     todos.forEach(todo => {
         const li = document.createElement('li');
@@ -90,6 +94,16 @@ function renderTodos() {
 
         todoList.appendChild(li);
     });
+}
+
+function updateTaskTracker() {
+    const total = todos.length;
+    const completed = todos.filter(todo => todo.completed).length;
+    const active = total - completed;
+
+    totalCount.textContent = total;
+    activeCount.textContent = active;
+    completedCount.textContent = completed;
 }
 
 function saveTodos() {
