@@ -2,9 +2,14 @@ const todoInput = document.getElementById('todoInput');
 const addBtn = document.getElementById('addBtn');
 const todoList = document.getElementById('todoList');
 const emptyMessage = document.getElementById('emptyMessage');
+const themeToggle = document.getElementById('themeToggle');
 
 // Load todos from localStorage
 let todos = JSON.parse(localStorage.getItem('todos')) || [];
+
+// Load theme preference from localStorage
+const savedTheme = localStorage.getItem('theme') || 'light';
+applyTheme(savedTheme);
 
 // Render todos on page load
 renderTodos();
@@ -95,4 +100,24 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Theme toggle functionality
+themeToggle.addEventListener('click', () => {
+    const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+});
+
+function applyTheme(theme) {
+    const themeIcon = document.querySelector('.theme-icon');
+    
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        themeIcon.textContent = '☀️';
+    } else {
+        document.body.classList.remove('dark-theme');
+        themeIcon.textContent = '🌙';
+    }
 }
