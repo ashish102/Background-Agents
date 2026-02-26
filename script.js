@@ -31,7 +31,8 @@ function addTodo() {
     const text = todoInput.value.trim();
     
     if (text === '') {
-        alert('Please enter a todo!');
+        todoInput.classList.add('shake');
+        todoInput.addEventListener('animationend', () => todoInput.classList.remove('shake'), { once: true });
         return;
     }
 
@@ -48,10 +49,13 @@ function addTodo() {
     todoInput.focus();
 }
 
-function deleteTodo(id) {
-    todos = todos.filter(todo => todo.id !== id);
-    saveTodos();
-    renderTodos();
+function deleteTodo(id, listItem) {
+    listItem.classList.add('removing');
+    listItem.addEventListener('transitionend', () => {
+        todos = todos.filter(todo => todo.id !== id);
+        saveTodos();
+        renderTodos();
+    }, { once: true });
 }
 
 function toggleComplete(id) {
@@ -78,22 +82,35 @@ function renderTodos() {
         li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
         
         li.innerHTML = `
+            <div class="todo-checkbox" role="checkbox" aria-checked="${todo.completed}" tabindex="0" aria-label="Mark as ${todo.completed ? 'incomplete' : 'complete'}">${todo.completed ? '✓' : ''}</div>
             <span class="todo-text">${escapeHtml(todo.text)}</span>
-            <button class="delete-btn">Delete</button>
+            <button class="delete-btn" aria-label="Delete todo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
         `;
 
-        // Add click handler to toggle completion
-        li.querySelector('.todo-text').addEventListener('click', () => {
-            toggleComplete(todo.id);
+        const checkbox = li.querySelector('.todo-checkbox');
+        checkbox.addEventListener('click', () => toggleComplete(todo.id));
+        checkbox.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') toggleComplete(todo.id);
         });
 
-        // Add click handler to delete button
-        li.querySelector('.delete-btn').addEventListener('click', () => {
-            deleteTodo(todo.id);
-        });
+        li.querySelector('.todo-text').addEventListener('click', () => toggleComplete(todo.id));
+
+        li.querySelector('.delete-btn').addEventListener('click', () => deleteTodo(todo.id, li));
 
         todoList.appendChild(li);
     });
+}
+
+function bumpCount(el) {
+    el.classList.remove('bump');
+    // Reading offsetWidth triggers a synchronous browser reflow,
+    // which is necessary so the removed class is flushed before re-adding it,
+    // allowing the CSS animation to restart from scratch.
+    // eslint-disable-next-line no-unused-expressions
+    el.offsetWidth;
+    el.classList.add('bump');
 }
 
 function updateTaskTracker() {
@@ -101,9 +118,18 @@ function updateTaskTracker() {
     const completed = todos.filter(todo => todo.completed).length;
     const active = total - completed;
 
-    totalCount.textContent = total;
-    activeCount.textContent = active;
-    completedCount.textContent = completed;
+    if (totalCount.textContent !== String(total)) {
+        totalCount.textContent = total;
+        bumpCount(totalCount);
+    }
+    if (activeCount.textContent !== String(active)) {
+        activeCount.textContent = active;
+        bumpCount(activeCount);
+    }
+    if (completedCount.textContent !== String(completed)) {
+        completedCount.textContent = completed;
+        bumpCount(completedCount);
+    }
 }
 
 function saveTodos() {
